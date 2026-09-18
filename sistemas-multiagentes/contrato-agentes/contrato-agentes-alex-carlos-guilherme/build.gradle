@@ -1,0 +1,150 @@
+/*
+   Projeto contrato-agentes-alex-carlos-guilherme
+
+   Gradle build file for Jason Application
+   September 14, 2026 - 13:07:47
+*/
+
+plugins {
+    id 'com.gradleup.shadow' version '8.3.3'
+    id 'java'
+}
+
+defaultTasks 'run'
+
+def numeroIniciadores = (findProperty('n') ?: '2') as int
+def numeroParticipantes = (findProperty('m') ?: '6') as int
+def servicosPorIniciador = (findProperty('i') ?: '3') as int
+
+if (numeroIniciadores <= 1 || numeroIniciadores >= 200) {
+    throw new GradleException('n deve atender a 1 < n < 200')
+}
+if (numeroParticipantes <= 1 || numeroParticipantes >= 50) {
+    throw new GradleException('m deve atender a 1 < m < 50')
+}
+if (servicosPorIniciador <= 0 || servicosPorIniciador >= 10) {
+    throw new GradleException('i deve atender a 0 < i < 10')
+}
+
+// set version of group for your project
+//version '1.0'
+//group   'io.github.jason-lang'
+
+repositories {
+    mavenCentral()
+    maven { url "https://raw.githubusercontent.com/jacamo-lang/mvn-repo/master" }
+    //maven { url "https://jade.tilab.com/maven/" }
+}
+
+dependencies {
+    implementation 'io.github.jason-lang:jason-interpreter:3.3.0'
+
+    // to use locally installed jars:
+    implementation fileTree(dir: 'lib', include: '*.jar')
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/java'
+            srcDir 'src/env'
+            srcDir '.' // some old jason apps store .java files in project root
+        }
+        resources {
+            srcDir 'src/resources'
+        }
+    }
+}
+
+def generatedMas = layout.buildDirectory.file('generated/experimento.mas2j')
+
+tasks.register('generateMas') {
+    outputs.file(generatedMas)
+    doLast {
+        def porTipo = numeroParticipantes.intdiv(3)
+        def resto = numeroParticipantes % 3
+        def vendedoresBotao = porTipo + (resto > 0 ? 1 : 0)
+        def vendedoresLinha = porTipo + (resto > 1 ? 1 : 0)
+        def vendedoresZiper = porTipo
+        def agentes = new StringBuilder()
+        agentes.append("            contratante #${numeroIniciadores};\n")
+        if (vendedoresBotao > 0) agentes.append("            vendedor_botao #${vendedoresBotao};\n")
+        if (vendedoresLinha > 0) agentes.append("            vendedor_linha #${vendedoresLinha};\n")
+        if (vendedoresZiper > 0) agentes.append("            vendedor_ziper #${vendedoresZiper};\n")
+        agentes.append('            monitor;')
+
+        def arquivo = generatedMas.get().asFile
+        arquivo.parentFile.mkdirs()
+        arquivo.text = """MAS contrato_agentes_alex_carlos_guilherme {
+    environment: ambiente.ContratoEnvironment(${numeroIniciadores},${numeroParticipantes},${servicosPorIniciador})
+    agents:
+${agentes}
+    aslSourcePath: \"src/agt\";
+}
+"""
+        println "Configuracao: n=${numeroIniciadores}, m=${numeroParticipantes}, i=${servicosPorIniciador}"
+    }
+}
+
+task run (type: JavaExec, dependsOn: ['classes', 'generateMas']) {
+    group = 'Jason'
+    description 'runs the application'
+    mainClass = 'jason.infra.local.RunLocalMAS'
+    args = [generatedMas.get().asFile.absolutePath]
+	if (project.hasProperty('headless')) {
+		args += ['--log-conf', 'logging-headless.properties']
+	}
+	// options:
+	//     args = ['contrato-agentes-alex-carlos-guilherme.mas2j', '--debug']
+	//     args = ['contrato-agentes-alex-carlos-guilherme.mas2j', '--log-conf', 'l.p']
+    classpath sourceSets.main.runtimeClasspath
+}
+
+task runJade (type: JavaExec, dependsOn: 'classes') {
+    group = 'Jason'
+    description 'runs the application with Jade infrastructure'
+    mainClass = 'jason.infra.jade.RunJadeMAS'
+    args = [ 'contrato-agentes-alex-carlos-guilherme.mas2j', '-gui' ]
+    // options:
+    //     args = ['contrato-agentes-alex-carlos-guilherme.mas2j', '-gui', '-sniffer' ]
+    // and all usual JADE options for jade.Boot
+    classpath sourceSets.main.runtimeClasspath
+}
+
+shadowJar {
+    doFirst {
+        copy {
+            from 'contrato-agentes-alex-carlos-guilherme.mas2j'
+            rename 'contrato-agentes-alex-carlos-guilherme.mas2j','default.mas2j'
+            into project.projectDir.absolutePath + '/'
+        }
+    }
+    archiveFileName = "jason-${project.name}-all.jar" // the name must start with jacamo so that jacamo...jar is found in the classpath
+    from (project.projectDir.absolutePath + '/src') {
+        include '**/*.asl'
+        include '**/*.xml'
+        include '**/*.sai'
+        include '**/*.ptl'
+        include '**/*.jcm'
+        include '*.properties'
+        exclude 'test'
+    }
+    from (project.buildDir.absolutePath + '/classes') {
+        include '**/*'
+    }
+    from (project.buildDir.absolutePath + '/jcm') {
+        include '**/*'
+    }
+    from (project.projectDir.absolutePath + '/') {
+        include '*.properties'
+        include 'default.mas2j'
+    }
+
+    manifest {
+        attributes 'Main-Class': 'jason.infra.local.RunLocalMAS'
+    }
+
+    doLast {
+        println("You can run your application with: java -jar build/libs/jason-${project.name}-all.jar")
+    }
+}

@@ -1,0 +1,16 @@
+/*
+ * Contract Net Protocol — Alex, Carlos e Guilherme
+ * Configuracao de exemplo. A execucao normal gera a configuracao experimental
+ * a partir dos parametros n, m e i informados ao Gradle.
+ */
+MAS contrato_agentes_alex_carlos_guilherme {
+    environment: ambiente.ContratoEnvironment(2,6,3)
+
+    agents: contratante #2;
+            vendedor_botao #2;
+            vendedor_linha #2;
+            vendedor_ziper #2;
+            monitor;
+
+    aslSourcePath: "src/agt";
+}

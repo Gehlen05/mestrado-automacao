@@ -1,0 +1,16 @@
+name: contrato-agentes-alex-carlos-guilherme
+
+services:
+  simulacao:
+    build:
+      context: .
+    environment:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+    volumes:
+      - gradle-cache:/home/gradle/.gradle
+      - ./resultados:/app/resultados
+    stdin_open: true
+    tty: true
+
+volumes:
+  gradle-cache:
