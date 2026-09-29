@@ -1,0 +1,11 @@
+MAS leilao_japones {
+  agents:
+    leiloeiro [beliefs="participantes([participante_1,participante_2,participante_3,participante_4,participante_5]),inicio(100),passo(50)"];
+    participante_1 participante.asl [beliefs="valoracao(450)"];
+    participante_2 participante.asl [beliefs="valoracao(520)"];
+    participante_3 participante.asl [beliefs="valoracao(590)"];
+    participante_4 participante.asl [beliefs="valoracao(660)"];
+    participante_5 participante.asl [beliefs="valoracao(730)"];
+    monitor;
+  aslSourcePath: "src/agt";
+}

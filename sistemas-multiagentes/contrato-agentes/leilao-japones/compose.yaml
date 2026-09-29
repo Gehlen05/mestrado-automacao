@@ -1,0 +1,11 @@
+services:
+  simulacao:
+    build: .
+    working_dir: /app
+    volumes:
+      - .:/app
+      - gradle-cache:/root/.gradle
+    environment:
+      - GRADLE_USER_HOME=/root/.gradle
+volumes:
+  gradle-cache:

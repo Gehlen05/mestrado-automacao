@@ -1,0 +1,34 @@
+plugins { id 'java' }
+defaultTasks 'run'
+repositories {
+    mavenCentral()
+    maven { url 'https://raw.githubusercontent.com/jacamo-lang/mvn-repo/master' }
+    maven { url 'https://repo.gradle.org/gradle/libs-releases' }
+}
+dependencies { implementation 'org.jacamo:jacamo:1.3.0' }
+sourceSets.main.java.srcDirs = ['src/env']
+def versao = (findProperty('versao') ?: 'a').toString()
+if (!(versao in ['a', 'ae'])) throw new GradleException('versao deve ser a ou ae')
+tasks.register('generateMas', Exec) {
+    commandLine 'python3', 'gerar_participantes.py', (findProperty('m') ?: '5').toString(),
+        '--versao', versao, '--inicio', (findProperty('inicio') ?: '100').toString(),
+        '--passo', (findProperty('passo') ?: '50').toString(),
+        '--valores', (findProperty('valores') ?: '').toString()
+}
+tasks.register('run', JavaExec) {
+    dependsOn 'classes', 'generateMas'
+    mainClass = versao == 'a' ? 'jason.infra.local.RunLocalMAS' : 'jacamo.infra.JaCaMoLauncher'
+    classpath = sourceSets.main.runtimeClasspath
+    args = [file("build/generated/leilao.${versao == 'a' ? 'mas2j' : 'jcm'}").absolutePath]
+    args += ['--log-conf', file('logging-headless.properties').absolutePath]
+    systemProperty 'java.util.logging.config.file', file('logging-headless.properties').absolutePath
+    systemProperty 'java.awt.headless', 'true'
+}
+
+// Classpath para a bateria: compilar uma vez e iniciar uma JVM por experimento.
+tasks.register('preparar') {
+    dependsOn 'classes'
+    doLast {
+        file('build/runtime-classpath.txt').text = sourceSets.main.runtimeClasspath.asPath
+    }
+}
