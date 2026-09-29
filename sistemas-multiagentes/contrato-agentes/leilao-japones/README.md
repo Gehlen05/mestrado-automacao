@@ -76,6 +76,4 @@ compilação nem download de dependências. Não equivale à duração exclusiva
 A contagem de decisões não é uma contagem de mensagens: A usa comunicação entre
 agentes; AE usa operações e propriedades observáveis.
 
-Esses arquivos são dados brutos para análise. O relatório acadêmico não é gerado.
-O arquivo `RELATORIO-TEMPLATE.md` é um modelo anterior, preservado sem atualização;
-suas afirmações não devem ser tratadas como resultados da implementação atual.
+Esses arquivos são dados brutos para análise.
